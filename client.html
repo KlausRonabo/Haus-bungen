@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+	<title>Restful</title>
+	<meta charset="utf-8">
+	<script src="jquery-3.2.1.min.js"></script>
+	<script>
+var deleteTodo = function( event ) {
+	event.preventDefault();
+	var id = $( this ).parent().parent().data( 'id' );
+	$.ajax({
+		url:'http://localhost:3000/todos/'+id,
+		method:'DELETE',
+		success:function() {
+			getData();
+			alert( 'gelöscht' );
+		}
+	})
+};
+var editTodo = function( event ) {
+	event.preventDefault();
+	var id = $( this ).parent().parent().data( 'id' );
+	var liste = {
+		aufgabe: $(this).parent().parent().find('td:nth-child(1)').html(),
+		priorität:$(this).parent().parent().find('td:nth-child(2)').html()
+	}
+	$.ajax({
+		url:'http://localhost:3000/todos/'+id,
+		method:'PUT',
+		data:todo,
+		success:function(  ) {
+			alert( 'geändert' );
+			getData();
+		}
+	});
+};
+var getData = function() {
+	$.ajax({
+		url:'http://localhost:3000/todos',
+		success:function( daten ) {
+			var todos = daten.liste;
+			console.log( todos );
+			// cleanArray
+			var cleanTodos = [];
+			for ( var i in todos ) {
+				if ( !todos[i] ) continue;
+				todos[i].id = i;
+				todos[i].prioriät*=1;
+				cleanTodos.push( todos[i] );
+			}
+			todos = cleanTodos;
+			console.log( todos );
+			if ( sort ) {
+				todos.sort( function(a,b) {
+					if ( a[sort] > b[sort] ) return 1;
+					else return -1;
+				});
+			}
+
+			$( 'tr + tr + tr' ).remove();
+				for ( var i in todos ) {
+					if ( !todos[i] ) continue;
+					$( '<tr>' ).data('id', todos[i].id).appendTo( 'table' )
+						.append(
+							$('<td contenteditable>').html( todos[i].aufgabe )
+						)//aufgabe in tabelle einbinden und editierbar machen
+						.append(
+							$('<td contenteditable>').html( todos[i].priorität )
+						)//prioriät in tabelle einbinden und editierbar machen
+						.append(
+							$('<td>').append(
+								$( '<a href="#">erledigt</a>' ).on( 'click', deleteTodo )
+							).append(' | ').append($( '<a href="#">ändern</a>' ).on( 'click', editTodo ))
+						)//links hinzufügen zum zu löschen/editieren trennlinie dazwischen
+						;
+				} // for
+			if ( $( 'tr' ).length > 2 ) {
+				$( 'tr:nth-child(2)' ).hide();
+			} else {
+				$( 'tr:nth-child(2)' ).show();
+			}//wenn keine daten vorhanden blende aus
+		} // success
+	}); // ajax
+}; // getDAta
+
+$( document ).ready( getData );//hole daten aus json und erstelle tabelle wenn seite lädt
+$( document ).on( 'submit', '#newTodo', function(event) {
+	event.preventDefault();
+		var option = $('option:selected', '#prio').val();
+		console.log(option)
+	var todo = {
+		aufgabe: $('#todo').val(),
+		priorität:option//die variable zur bestimmung der gewählten nummer
+	};
+	$.ajax( {
+		url:'http://localhost:3000/todos/add',
+		method:'POST',
+		data:todo,
+		success:function() {
+			$( '#todo' ).val('');
+			$('#prio').val(option)
+			getData();
+			alert( 'Gespeichert' );
+		}
+	});
+}); // - Daten speichern
+var sort = false;
+$( document ).on( 'click','th',function() {
+	switch ( $(this).html() ) {
+		case 'Aufgabe': sort = 'aufgabe'; break;
+		case 'Priorität': sort = 'priorität'; break;
+	}
+	getData();
+});
+	</script>
+	<style>
+	* { font:16px Arial; }
+	th, td { border:1px solid #1c1c17; padding:8px; min-width:180px;  }
+	hr {border:none; margin:1em 10%; height:1px; background:#ddd; }
+	input { border:1px solid #ddd; padding:2px 10px; margin:5px; }
+	button, select { background:#33cc33; border:none; padding:5px; }
+	body {background:#ebebe0}
+	h1 { font-weight:bold; font-size:25px; }
+	em { font-style:italic; }
+	</style>
+</head>
+<body>
+
+	<h1>Aufgabenliste!</h1>
+	<form id="newTodo">
+		Neue Aufgabe:<input type="text" placeholder="" id="todo"><br>
+		Priorität: <select id="prio">
+			<option val="1">1</option>
+			<option val="2">2</option>
+			<option val="3">3</option>
+			<option val="4">3</option>
+			<option val="5">5</option>
+			<option val="6">6</option>
+			<option val="7">7</option>
+			<option val="8">8</option>
+			<option val="9">9</option>
+			<option val="10">10</option>9
+		</select>
+		<button>Speichern</button>
+	</form>
+	<hr>
+	<div id="ausgabe">
+		<table>
+	<tr><th>Aufgabe:</th><th>Priorität:</th></tr>
+			<td colspan="2"><em>noch keine Daten vorhanden</em></td></tr>
+		</table>
+
+
+</div>
+</body>
+</html>
